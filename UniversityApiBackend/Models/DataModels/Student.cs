@@ -11,6 +11,9 @@ namespace UniversityApiBackend.Models.DataModels
         [Required]
         public DateTime Dob { get; set; }
 
+        [Required]
+        public User User { get; set; } = new User();
+
         public ICollection<Course> Courses { get; set; } = new List<Course>();
 
     }

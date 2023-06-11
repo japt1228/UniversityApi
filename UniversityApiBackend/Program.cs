@@ -1,11 +1,24 @@
 // 1. Usings para trabajar con EntityFramework
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using Serilog;
 using UniversityApiBackend;
 using UniversityApiBackend.DataAccess;
 using UniversityApiBackend.Services;
+// 10. User Serilog to log events
 
 var builder = WebApplication.CreateBuilder(args);
+
+// 11. Config Serilog
+builder.Host.UseSerilog((hostBuilderCtx, loggerConf) =>
+{
+    loggerConf
+    .WriteTo.Console()
+    .WriteTo.Debug()
+    .ReadFrom.Configuration(hostBuilderCtx.Configuration);
+});
+
 
 // 2. Conexion con SQL Server Express
 
@@ -35,7 +48,7 @@ builder.Services.AddScoped<IStudentsService, StudentsService>();
 // 8. Add Authorization
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("UserOnlyPolicy", policy => policy.RequireClaim("UserOnly", "User1"));
+    options.AddPolicy("UserOnlyPolicy", policy => policy.RequireClaim("role", "user"));
 });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -44,6 +57,30 @@ builder.Services.AddEndpointsApiExplorer();
 // 9. TODO: Config Swagger to take care of Autorization of JWT
 builder.Services.AddSwaggerGen(options =>
 {
+    // We define the Security for authorization
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "JWT Authorization Header using Bearer Scheme"
+    });
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[]{}
+        }
+    });
 
 });
 
@@ -67,6 +104,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// 12. Tell app to use Serilog
+app.UseSerilogRequestLogging();
 
 app.UseHttpsRedirection();
 

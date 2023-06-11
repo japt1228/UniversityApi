@@ -25,7 +25,6 @@ namespace UniversityApiBackend.Helpers
             }else if (userAccounts.UserName == "User1")
             {
                 claims.Add(new Claim(ClaimTypes.Role, "User"));
-                claims.Add(new Claim("UserOnly", "User1"));
             }
 
             return claims;
